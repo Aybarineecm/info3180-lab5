@@ -32,7 +32,7 @@ cur.execute("""
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    poster_url VARCHAR(255) NOT NULL,
+    poster VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL
     );
 """)

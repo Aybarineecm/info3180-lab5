@@ -4,8 +4,9 @@ Jinja2 Documentation:    https://jinja.palletsprojects.com/
 Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
+
 from app import app, db
-from flask import render_template, request, jsonify, send_file
+from flask import render_template, request, jsonify, send_file , send_from_directory
 import os, psycopg2
 from werkzeug.utils import secure_filename
 from app.models import Movie
@@ -13,19 +14,18 @@ from .forms import MovieForm
 from datetime import datetime
 from flask_wtf.csrf import generate_csrf
 
-##Token##
+
+###
+# Routing for your application.
+###
+
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():
     return jsonify({'csrf_token': generate_csrf()})
 
-
-##Beginning##
-
 @app.route('/')
 def index():
     return jsonify(message="This is the beginning of our API")
-
-###movies ###
 
 @app.route('/api/v1/movies', methods=['POST'])
 def movies():
@@ -33,6 +33,7 @@ def movies():
 
     if formObj.validate_on_submit():
         res = request.form
+
         image_file = formObj.poster.data
         filename = secure_filename(image_file.filename)
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -65,17 +66,40 @@ def movies():
                 "message": "Movie Successfully added",
                 "title": res['title'],
                 "poster": filename,
-                "description": res['description']
-            }
+                "description": res['description'] }
     
         return jsonify(msg)
     
     else:       
         
         errors = form_errors(formObj)
-        return jsonify({'errors' : errors})       
+        return jsonify({'errors' : errors})
 
+@app.route('/api/v1/posters/<uploaddir>/<filename>')
+def get_movie(uploaddir,filename):
+    uploads_dir = app.config['UPLOAD_FOLDER']
+    return send_from_directory(os.path.join(os.getcwd(),uploads_dir), filename)
 
+@app.route('/api/v1/movies', methods=['GET'])
+def list_movies():
+    uploads_dir = app.config['UPLOAD_FOLDER']
+    posters = get_posters()
+
+    movies = Movie.query.all()
+
+    runningOutOfVariableNamesToDescribeMovies = []
+    for mov in movies:
+        runningOutOfVariableNamesToDescribeMovies.append({
+            'id': mov.id,
+            'title': mov.title,
+            'description': mov.description,
+            'poster': "/api/v1/posters/" + str(mov.poster)
+        })
+        print(mov.poster)
+
+    return jsonify({'movies': runningOutOfVariableNamesToDescribeMovies})
+
+        
 
 ###
 # The functions below should be applicable to all Flask apps.
@@ -119,3 +143,13 @@ def add_header(response):
 def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
+
+#HELPER FUNCTIONS
+def get_posters():
+    uploadDir = app.config['UPLOAD_FOLDER']
+    lst = []
+    for root, dirs, files in os.walk(uploadDir):
+        for file in files:
+            if file.endswith(('.jpg', '.jpeg', '.png', '.jfif', '.webp')):
+                lst.append(os.path.join(root, file))
+    return lst

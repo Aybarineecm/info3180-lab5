@@ -1,22 +1,28 @@
 <script setup>
+
     import { ref, onMounted } from "vue";
+
     let csrf_token = ref("")
     let fetchResponseType = ref("")
     let fetchResponse = ref("")
     
     function getCsrfToken() {
-        fetch('/api/v1/csrf-token').then((response) => response.json())
+        fetch('/api/v1/csrf-token')
+        .then((response) => response.json())
         .then((data) => {
         console.log(data);
         csrf_token.value = data.csrf_token;
         })
     }
+
     onMounted(() => {
         getCsrfToken()
     })
+
     function saveMovie(){
         let movieForm = document.querySelector("#movieForm")
         let formData = new FormData(movieForm)
+
         fetch("/api/v1/movies", {
             method: 'POST',
             body: formData,
@@ -41,6 +47,7 @@
             console.log(error);
         });
     }
+
 </script>
 
 <template>
@@ -69,7 +76,7 @@
 
         <div class="form-group mb-3">
             <label for="poster" class="form-label">Movie Poster</label>
-            <input type="text" id="poster" name="poster" class="formcontrol" accept=".jpg,.png" />
+            <input type="file" id="poster" name="poster" class="formcontrol" accept=".jpg,.png" />
         </div>
 
         <button>Submit</button>
@@ -77,7 +84,6 @@
     </form>
 
 </template>
-
 
 <style>
 @import url("https://fonts.googleapis.com/css?family=Lato:400,700");
@@ -100,6 +106,6 @@ input, textarea{
     width: 100%;
 }
 #poster{
-    border: 1px solid rgb(0, 0, 0);
+    border: 1px solid black;
 }
 </style>
