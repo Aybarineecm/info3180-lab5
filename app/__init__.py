@@ -5,14 +5,17 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
 import psycopg2
+from flask_wtf.csrf import CSRF
+from flask_wtf.csrf import CSRFProtect
+
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate =   Migrate(app,db)
 
 
-from app import views
 
 load_dotenv()
 
@@ -40,3 +43,5 @@ conn.commit()
 
 cur.close()
 conn.close()
+
+from app import views
