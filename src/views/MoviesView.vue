@@ -68,3 +68,52 @@
         padding: 15px;
     }
 </style>
+
+<template>
+    <div class="movies-view">
+        <div v-if="movies.length === 0">Loading movies...</div>
+        <div v-else>
+        <div class="movie-card" v-for="movie in movies" :key="movie.id">
+            <img :src="movie.poster" alt="" class="movie-poster" />
+            <div class="movie-details">
+            <h2>{{ movie.title }}</h2>
+            <p>{{ movie.description }}</p>
+            </div>
+        </div>
+        </div>
+    </div>
+    </template>
+    
+    <script setup>
+    import { ref, onMounted } from 'vue';
+    
+    let movies = ref([]);
+    
+    async function fetchMovies() {
+    const response = await fetch('/api/v1/movies');
+    const data = await response.json();
+    movies.value = data.movies;
+    }
+    
+    onMounted(fetchMovies);
+    </script>
+    
+    <style scoped>
+    .movie-card {
+    display: flex;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    }
+    
+    .movie-poster {
+    width: 150px;
+    height: 225px;
+    margin-right: 20px;
+    }
+    
+    .movie-details {
+    flex: 1;
+    }
+    </style>
+    

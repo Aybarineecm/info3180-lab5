@@ -15,8 +15,24 @@ from app.models import Movie
 import os
 
 ###
-# Routing for your application.
-###
+@app.route('/api/v1/movies', methods=['GET'])
+def get_movies():
+    movies = Movie.query.all()
+    movie_list = []
+    for movie in movies:
+        movie_data = {
+            'id': movie.id,
+            'title': movie.title,
+            'description': movie.description,
+            'poster': url_for('get_movie_poster', filename=movie.poster, _external=True)
+        }
+        movie_list.append(movie_data)
+    return jsonify({'movies': movie_list})
+
+@app.route('/api/v1/posters/<filename>', methods=['GET'])
+def get_movie_poster(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 
 @app.route('/')
 def index():
