@@ -5,105 +5,77 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 from app import app, db
-from flask import render_template, request, jsonify, send_file, url_for, flash, send_from_directory
+from flask import render_template, request, jsonify, send_file
+import os, psycopg2
 from werkzeug.utils import secure_filename
+from app.models import Movie
+from .forms import MovieForm
+from datetime import datetime
 from flask_wtf.csrf import generate_csrf
 
-from app.forms import MovieForm
-from app.models import Movie
-
-import os
-
-###
-@app.route('/api/v1/movies', methods=['GET'])
-def get_movies():
-    movies = Movie.query.all()
-    movie_list = []
-    for movie in movies:
-        movie_data = {
-            'id': movie.id,
-            'title': movie.title,
-            'description': movie.description,
-            'poster': url_for('get_movie_poster', filename=movie.poster, _external=True)
-        }
-        movie_list.append(movie_data)
-    return jsonify({'movies': movie_list})
-
-@app.route('/api/v1/posters/<filename>', methods=['GET'])
-def get_movie_poster(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-
-@app.route('/')
-def index():
-    return jsonify(message="This is the beginning of our API")
-
-
+##Token##
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():
     return jsonify({'csrf_token': generate_csrf()})
 
 
-@app.route('/api/v1/movies', methods=['GET'])
-def addMovie():
-    movies = Movie.query.all()
-    movieLst = []
+##Beginning##
 
-    for movie in movies:
-        movieLst.append({
-            "id": movie.id,
-            "title": movie.title,
-            "description": movie.description,
-            "poster": "/api/v1/posters/{}".format(movie.poster)
-        })
-    data = {
-        "movies": movieLst
-    }
+@app.route('/')
+def index():
+    return jsonify(message="This is the beginning of our API")
 
-    return jsonify(data)
-
-@app.route('/api/v1/posters/<filename>')
-def getPoster(filename):
-    root_dir = os.getcwd()
-    return send_from_directory(os.path.join(root_dir, app.config['UPLOAD_FOLDER']), filename)
-
+###movies ###
 
 @app.route('/api/v1/movies', methods=['POST'])
 def movies():
-    form = MovieForm() 
+    formObj = MovieForm()
 
-    if form.validate_on_submit():
-        title = form.title.data
-        description = form.description.data
-        poster = form.poster.data
+    if formObj.validate_on_submit():
+        res = request.form
+        image_file = formObj.poster.data
+        filename = secure_filename(image_file.filename)
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        image_file.save(image_path)
+        conn = psycopg2.connect(
+            host="localhost",
+            database="labfinal",
+            user=os.environ.get('DATABASE_USERNAME', 'postgres'),
+            password= os.environ.get('DATABASE_PASSWORD')
+        )
+        cur = conn.cursor()
 
-        filename = secure_filename(poster.filename)
-        poster.save(os.path.join(
-            app.config['UPLOAD_FOLDER'], filename
-        ))
-        
-        newMovie = Movie(title, description, filename)
-
-        db.session.add(newMovie)
-        db.session.commit()
-
-        data = {
-            "message": "Movie Successfully added",
-            "title": title,
-            "poster": filename,
-            "description": description
+        movie_data = {
+            'title': res['title'],
+            'description': res['description'],
+            'poster': str(image_path),
+            'created_at': str(datetime.now())
         }
-        return jsonify(data)
 
-    else:
-        formErrors = form_errors(form)
-        
-        errors = {
-            "errors": formErrors
-        }
-        return jsonify(errors)
+        cur.execute("""
+            INSERT INTO movies (title, description, poster, created_at)
+            VALUES (%(title)s, %(description)s, %(poster)s, %(created_at)s);
+        """, movie_data)
 
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        msg = {
+                "message": "Movie Successfully added",
+                "title": res['title'],
+                "poster": filename,
+                "description": res['description']
+            }
+    
+        return jsonify(msg)
+    
+    else:       
         
+        errors = form_errors(formObj)
+        return jsonify({'errors' : errors})       
+
+
 
 ###
 # The functions below should be applicable to all Flask apps.

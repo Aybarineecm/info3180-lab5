@@ -1,5 +1,6 @@
 from . import db
-class Movies(db.Model):
+from flask import Flask, request
+class Movie(db.Model):
     __tablename__ = 'movies'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -12,7 +13,7 @@ class Movies(db.Model):
         self.id = id
         self.title = title
         self.description = description
-        self.poster = poster
+        self.poster= poster
         self.created_at = created_at
 
     def __repr__(self):

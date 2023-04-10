@@ -8,16 +8,15 @@ import psycopg2
 from flask_wtf.csrf import CSRFProtect
 
 
+
 app = Flask(__name__)
-csrf = CSRFProtect(app)
 app.config.from_object(Config)
+csrf = CSRFProtect(app)
 db = SQLAlchemy(app)
 migrate =   Migrate(app,db)
 
 
-
 load_dotenv()
-
 
 conn = psycopg2.connect(
     host="localhost",
@@ -33,7 +32,7 @@ cur.execute("""
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    poster VARCHAR(255) NOT NULL,
+    poster_url VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL
     );
 """)
@@ -42,5 +41,6 @@ conn.commit()
 
 cur.close()
 conn.close()
+
 
 from app import views
