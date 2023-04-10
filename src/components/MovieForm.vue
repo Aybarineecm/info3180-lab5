@@ -1,3 +1,4 @@
+
 <template>
     <form @submit.prevent="saveMovie" id="movieForm">
         <div class="form-group mb-3">
@@ -17,45 +18,28 @@
 </template>
 
 <script setup>
-    import {
-        ref,
-        onMounted
-    } from 'vue';
-    onMounted(() => {
-        getCsrfToken();
-    });
+
+import {ref, onMounted} from 'vue'; onMounted(() => { getCsrfToken(); });
+
     let csrf_token = ref("");
-    function getCsrfToken() {
-        fetch('/api/v1/csrf-token')
-            .then((response) => response.json())
-            .then((data) => {
+        function getCsrfToken() {
+            fetch('/api/v1/csrf-token')
+                .then((response) => response.json())
+                .then((data) => {
                 console.log(data);
                 csrf_token.value = data.csrf_token;
-            })
+                })
     }
-    // const title = ref('');
-    // const description = ref('');
-    // const poster = ref('');
-    function saveMovie(){
-        let uploadForm = document.querySelector("#movieForm")
-        let formData = new FormData(uploadForm)
+
+    function saveMovie() {
+        let movieForm =document.getElementById('movieForm');
+        let form_data = new FormData(uploadForm);
         fetch("/api/v1/movies", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrf_token.value
+            method: 'POST',body: form_data, headers: { 'X-CSRFToken': csrf_token.value}}).then(function (response) {
+            return response.json();}).then(function (data) {
+ // display a success message
+        console.log(data);}) .catch(function (error) {console.log(error); });
             }
-        })
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (data) {
-            console.log(data);
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
-    }
 </script>
 
 

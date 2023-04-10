@@ -5,7 +5,6 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
 import psycopg2
-from flask_wtf.csrf import CSRF
 from flask_wtf.csrf import CSRFProtect
 
 
